@@ -20,7 +20,7 @@ FlatDirectory is the implementation of the web3 storage data contract. Click [he
 
 
 #### Deploy SimpleBlog
-Before users write blogs, they need to deploy their own SimpleBlog contract.
+Before users start blogging, they need to deploy their own SimpleBlog contract.
 ```
 const provider = new ethers.providers.Web3Provider(window.ethereum);
 const receipt = await this._doTx(() =>
@@ -32,7 +32,7 @@ const receipt = await this._doTx(() =>
 ```
 
 #### Write blog
-Get the edited content in markdown, calculate the token that needs to be staked according to the content length, and submit the content on the chain.
+Get the edited content from markdown, calculate the token that needs to be staked according to the content length, and submit the content on the chain.
 ```
 const content = this.markdownEditor.value();
 const fileSize = Buffer.byteLength(content, "utf-8");
@@ -76,22 +76,7 @@ await this._doTx(() => contract.deleteBlog(idx));
 ```
 
 #### Write comment
-Can re-edit blog posts.
 ```
-const newContent = this.markdownEditor.value();
-const fileSize = Buffer.byteLength(newContent, "utf-8");
-
-const contract = blogContract(this.SimpleBlogAddress);
-let cost = 0;
-if (fileSize > 24 * 1024 - 326) {
-    cost = Math.floor((fileSize + 326) / 1024 / 24);
-}
-await this._doTx(() => contract.editBlog(
-    blogId,
-    stringToHex(this.editingTitle),
-    stringToHex(newContent),
-    {value: ethers.utils.parseEther(cost.toString())}
-));
 const content = this.commentText.toString();
 const contract = blogContract(this.SimpleBlogAddress);
 const idx = parseInt(this.blogId, 10);
@@ -105,119 +90,70 @@ SimpleBlog is used to manage user Blogs.
 
 #### Storage structure
 ```
-contract SimpleW3Mail {
-    struct User {
-        bytes32 publicKey;
-        address fdContract;
-    
-        Email[] sentEmails;
-        mapping(bytes => uint256) sentEmailIds;
-        Email[] inboxEmails;
-        mapping(bytes => uint256) inboxEmailIds;
-    
-        mapping(bytes => File) files;
+contract SimpleBlog {
+    struct Blog {
+        bytes title;
+        uint256 timestamp; // 0 means deleted
     }
-    mapping(address => User) userInfos; // // User upload info mapping
+
+    struct CommentInfo {
+        address contractAddress;
+        uint256 commentSize;
+    }
+
+    Blog[] public blogs;
+    uint256 public blogLength;
+    mapping(uint256 => CommentInfo) public commentList; // Each article will have a SimpleComment contract
 }
 ```
 
 #### Register
-Before sending mails, you need to submit public key for registration, and receive a welcome mail.
+When the contract is deployed, a flat contract will be generated synchronously to store the blog content.
 ```
-function register(bytes32 publicKey) public {
-    User storage user = userInfos[msg.sender];
-    require(user.fdContract == address(0), "Address is registered");
-    user.publicKey = publicKey;
-    FlatDirectory fileContract = new FlatDirectory(0);
-    user.fdContract = address(fileContract);
-
-    // default email
-    Email memory dEmail;
-    dEmail.time = block.timestamp;
-    dEmail.from = address(this);
-    dEmail.to = msg.sender;
-    dEmail.uuid = 'default-email';
-    dEmail.title = 'Welcome to W3Mail!';
-    // add email
-    user.inboxEmails.push(dEmail);
-    user.inboxEmailIds['default-email'] = 1;
+constructor() SimpleFlatDirectory(0) {
+    FlatDirectory flat = new FlatDirectory(0);
+    flat.changeOwner(msg.sender);
+    assets = address(flat);
 }
 ```
 
-#### Send
+#### Write Blog
+Every time an article is created, a SimpleComment is generated synchronously to manage the comments of this article.
 ```
-function sendEmail(
-    address toAddress, 
-    bool isEncryption, 
-    bytes memory uuid, 
-    bytes memory title, 
-    bytes calldata encryptData, 
-    bytes memory fileUuid
-)
-    public
-    payable
-    isRegistered
-{
-    User storage toInfo = userInfos[toAddress];
-    require(!isEncryption || toInfo.fdContract != address(0), "Unregistered users can only send unencrypted emails");
+function writeBlog(bytes memory title, bytes memory content) public payable {
+        uint256 idx = blogs.length;
+        blogs.push(Blog(title, block.timestamp));
+        blogLength++;
+        write(abi.encodePacked(idx), content);
 
-    User storage fromInfo = userInfos[msg.sender];
-    // create email
-    Email memory email;
-    email.isEncryption = isEncryption;
-    ...
-    email.fileUuid = fileUuid;
-
-    // add email
-    fromInfo.sentEmails.push(email);
-    fromInfo.sentEmailIds[uuid] = fromInfo.sentEmails.length;
-    toInfo.inboxEmails.push(email);
-    toInfo.inboxEmailIds[uuid] = toInfo.inboxEmails.length;
-
-    // write email
-    FlatDirectory fileContract = FlatDirectory(fromInfo.fdContract);
-    fileContract.writeChunk{value: msg.value}(getNewName(uuid, 'message'), 0, encryptData);
+        CommentsInfo storage info = commentsList[idx];
+        SimpleComment comment = new SimpleComment();
+        info.contractAddress = address(comment);
 }
 ```
 
-#### Inbox
+#### Edit Blog
 ```
-function getInboxEmails() public view
-    returns (
-        bool[] memory isEncryptions,
-        uint256[] memory times,
-        address[] memory fromMails,
-        address[] memory toMails,
-        bytes[] memory uuids,
-        bytes[] memory titles,
-        bytes[] memory fileUuids,
-        bytes[] memory fileNames
-        )
-    {
-        User storage info = userInfos[msg.sender];
-        uint256 length = info.inboxEmails.length;
-        isEncryptions = new bool[](length);
-        ...
-        fileNames = new bytes[](length);
-        for (uint256 i; i < length; i++) {
-            isEncryptions[i] = info.inboxEmails[i].isEncryption;
-            ...
-            fileUuids[i] = info.inboxEmails[i].fileUuid;
-            fileNames[i] = userInfos[fromMails[i]].files[fileUuids[i]].name;
-        }
-    }
+function editBlog(uint256 idx, bytes memory newTitle, bytes memory newContent) public payable {
+    Blog storage blog = blogs[idx];
+    require(blog.timestamp != 0, "non-existent");
+    blog.title = newTitle;
+    blog.timestamp = block.timestamp;
+    write(abi.encodePacked(idx), newContent);
+}
 ```
 
-#### Content of Mail
-The email context and attachments are stored in the sender's contract. If the sender deletes the email, 
-the recipient will no longer be able to see the email.
+#### Write Comment
 ```
-function getEmailContent(address fromEmail, bytes memory uuid, uint256 chunkId) public view returns(bytes memory data) {
-    if(fromEmail == address(this) &&  keccak256(uuid) == keccak256('default-email')) {
-        // default mail context
-        return bytes(defaultEmail);
-    }
-    FlatDirectory fileContract = FlatDirectory(userInfos[fromEmail].fdContract);
-    (data, ) = fileContract.readChunk(getNewName(uuid, bytes('message')), chunkId);
+function writeComment(uint256 blodId, bytes memory content) public payable {
+    CommentInfo storage info = commentList[blodId];
+    address contractAddress = info.contractAddress;
+    require(contractAddress != address(0), "blog not exist");
+
+    SimpleComment com = SimpleComment(contractAddress);
+    com.writeComment(info.commentSize, content);
+    com.writeOwner(info.commentSize, msg.sender);
+    com.writeTimestamp(info.commentSize, block.timestamp);
+    info.commentSize++;
 }
 ```
