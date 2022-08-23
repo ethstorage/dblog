@@ -157,3 +157,38 @@ function writeComment(uint256 blodId, bytes memory content) public payable {
     info.commentSize++;
 }
 ```
+<br>
+
+### SimpleComment
+SimpleComment is used to store blog comments.
+
+#### Write comment content
+```
+function writeComment(uint256 commentId, bytes memory content) public payable {
+    write(abi.encodePacked(commentId, "comment"), content);
+}
+
+function writeOwner(uint256 commentId, address owner) public payable {
+    write(abi.encodePacked(commentId, "owner"), addressToBytes(owner));
+}
+
+function writeTimestamp(uint256 commentId, uint256 timestamp) public payable {
+    write(abi.encodePacked(commentId, "timestamp"), uintToBytes(timestamp));
+}
+```
+
+#### Read comment content
+```
+function getComment(uint256 commentId) public view returns (bytes memory) {
+    return files(abi.encodePacked(commentId, "comment"));
+}
+
+function getOwner(uint256 commentId) public view returns (address) {
+    bytes memory content = files(abi.encodePacked(commentId, "owner"));
+    return bytesToAddress(content);
+}
+
+function getTimestamp(uint256 commentId) public view returns (bytes memory) {
+    return files(abi.encodePacked(commentId, "timestamp"));
+}
+```
