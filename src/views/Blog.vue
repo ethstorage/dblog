@@ -344,10 +344,10 @@ const nameServiceContract = () => {
   const {address, abi} = nameServiceContractInfo;
   return getContract(address, abi);
 };
-const nameServiceAPI = (subURL) =>
-    generateAPI(
-        `https://galileo.web3q.io/${nameServiceContractInfo.address}:3334${subURL}`
-    );
+
+const nameServiceAPI = (subURL) => generateAPI(
+    `https://galileo.web3q.io/${nameServiceContractInfo.address}:3334${subURL}`
+);
 
 const FileContract = (address) => {
   return getContract(address, FileContractInfo.abi);
@@ -516,20 +516,18 @@ export default {
           cost = Math.floor((fileSize + 326) / 1024 / 24);
         }
 
-        action = () =>
-            contract.writeBlog(
-                stringToHex(this.editingTitle),
-                stringToHex(content),
-                {value: ethers.utils.parseEther(cost.toString())}
-            );
+        action = () => contract.writeBlog(
+            stringToHex(this.editingTitle),
+            stringToHex(content),
+            {value: ethers.utils.parseEther(cost.toString())}
+        );
       } else {
         const idx = parseInt(this.$route.params.id, 10);
-        action = () =>
-            contract.editBlog(
-                idx,
-                stringToHex(this.editingTitle),
-                stringToHex(content)
-            );
+        action = () => contract.editBlog(
+            idx,
+            stringToHex(this.editingTitle),
+            stringToHex(content)
+        );
         reloadCurrentBlog = true;
       }
       await this._doTx(action);
@@ -606,15 +604,13 @@ export default {
         return;
       }
       alert("invalid address");
-      return;
     },
     async _doTx(txFunc) {
       try {
         const tx = await txFunc();
         this.isEditingBlog = false;
         this.isLoading = true;
-        const receipt = await tx.wait();
-        return receipt;
+        return await tx.wait();
       } catch (error) {
         alert(
             (error.data && error.data.message) ||
