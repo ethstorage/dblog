@@ -1,4 +1,4 @@
-# dBolg
+# dBlog
 
 ## Introduction
 dBlog is a decentralized blog based on the Web3Q chain. Anyone can write and publish blog posts in dBlog, 
