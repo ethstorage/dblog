@@ -10,7 +10,7 @@ The official home page of the dBlog project is https://web3q.io/dblog.w3q/.
 ## Structure
 This project consists of three contracts, the blog.w3q for storing front-end web files, SimpleBlog for managing blogs, and SimpleComment for managing comments.
 
-Since the front-end code, data and functions are all on the blockchain, the full decentralization of the project is achieved.
+The front-end code, data and functions are all on the blockchain, the full decentralization of the project is achieved.
 
 ### dblog.w3q
 [dblog.w3q](https://web3q.io/w3ns.w3q/#/domains/dblog.w3q) is a w3ns domain name, which maps a contract address, 
