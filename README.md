@@ -2,7 +2,7 @@
 
 ## Introduction
 dBlog is a decentralized blogging platform based on the Web3Q chain. On this platform, 
-anyone can create blog spaces, publish blog articles, and leave comments on articles.
+anyone can create blog spaces, publish blog articles, and comments on articles.
    
 The official home page of the dBlog project is https://web3q.io/dblog.w3q/.
 
@@ -15,7 +15,7 @@ As a decentralized blog, all the data should be stored on the blockchain. The Fl
 more details about it, please click [here](https://docs.web3q.io/tutorials/migrate-your-website-to-web3q-in-5-mins).
 
 #### Create Blog
-First, create a blog contract. The blog contract inherits from Flat Directory, 
+First, create a blog contract. The blog contract inherits from FlatDirectory, 
 so articles can be submitted to the blog contract and stored on the blockchain.
 ```
 const provider = new ethers.providers.Web3Provider(window.ethereum);
