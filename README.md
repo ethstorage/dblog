@@ -16,7 +16,6 @@ FlatDirectory is the implementation of the web3 storage data contract. Click [he
 
 ### Blog CRUD
 
-#### FlatDirectory
 #### Create Blog
 Creating a blog will create a new blog contract for the creator, and the blog contract inherits from FlatDirectory, 
 so articles can be submitted to the blog contract and stored on the blockchain.
