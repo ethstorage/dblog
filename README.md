@@ -10,7 +10,7 @@ dBlog can be visited here: https://web3q.io/dblog.w3q/.
 ## How does it work
 
 ### dblog.w3q
-dblog.w3q is a w3ns domain name, which maps a contract address. The contract mapped by dblog.w3q is a FlatDirectory contract that stores dblog's website files.
+dblog.w3q is a w3ns domain name, which maps a contract address. The contract mapped by dblog.w3q is a FlatDirectory contract that stores dBlog's website files.
 
 FlatDirectory is the implementation of the web3 storage data contract. Click [here](https://docs.web3q.io/tutorials/migrate-your-website-to-web3q-in-5-mins) for details.
 
