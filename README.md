@@ -7,7 +7,7 @@ anyone can create their own blog spaces, publish blogs, and leave a comment on a
 dBlog can be visited here: https://web3q.io/dblog.w3q/.
 
 
-## How Does It Work
+## How does it work
 
 ### dblog.w3q
 dblog.w3q is a w3ns domain name, which maps a contract address. The contract mapped by dblog.w3q is a FlatDirectory contract that stores dblog's website files.
