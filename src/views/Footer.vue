@@ -1,26 +1,20 @@
 <template>
   <footer class="footer">
     <div class="content has-text-right">
-      <a href="mailto:contact@web3q.io" target="_blank">
-        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fas', 'envelope']"/>
+      <a href="https://github.com/ethstorage/dblog" target="_blank">
+        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'github']"/>
       </a>
-      <a href="https://t.me/Web3Q" target="_blank">
-        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'telegram']"/>
+      <a href="https://twitter.com/EthStorage" target="_blank">
+        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'twitter']"/>
       </a>
-      <a href="https://medium.com/@Web3Q_io" target="_blank">
+      <a href="https://ethstorage.medium.com/" target="_blank">
         <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'medium']"/>
+      </a>
+      <a href="https://t.me/ethstorage" target="_blank">
+        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'telegram']"/>
       </a>
       <a href="https://discord.gg/mZqqUZxjed" target="_blank">
         <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'discord']"/>
-      </a>
-      <a href="https://twitter.com/Web3Q_io" target="_blank">
-        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'twitter']"/>
-      </a>
-      <a href="https://github.com/web3q" target="_blank">
-        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'github']"/>
-      </a>
-      <a href="https://docs.web3q.io" target="_blank">
-        <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fas', 'book']"/>
       </a>
     </div>
   </footer>
