@@ -13,7 +13,7 @@
       <a href="https://t.me/ethstorage" target="_blank">
         <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'telegram']"/>
       </a>
-      <a href="https://discord.gg/mZqqUZxjed" target="_blank">
+      <a href="https://discord.gg/xhCwaMp7ps" target="_blank">
         <font-awesome-icon :style="{color: this.color}" size="2x" :icon="['fab', 'discord']"/>
       </a>
     </div>
