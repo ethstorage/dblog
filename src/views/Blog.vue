@@ -672,6 +672,7 @@ export default {
         const chunks = bufferChunk(content, chunkSize);
         fileSize = fileSize / chunkSize;
         let uploadState = true;
+        let notEnoughBalance = false;
         this.fileUrl = "The file is too big and exceeds the 475kb limit, so it needs to be uploaded in " + chunks.length + " steps."
         for (const index in chunks) {
           const chunk = chunks[index];
@@ -690,6 +691,14 @@ export default {
           }
 
           try {
+            const balance = await fileContract.provider.getBalance(account[0]);
+            if(balance.lte(ethers.utils.parseEther(cost.toString()))){
+              // not enough balance
+              uploadState = false;
+              notEnoughBalance = true;
+              break;
+            }
+
             // file is remove or change
             const tx = await fileContract.writeChunk(hexName, index, hexData, {
               value: ethers.utils.parseEther(cost.toString())
@@ -711,7 +720,14 @@ export default {
         if (uploadState) {
           this.fileUrl = "https://galileo.web3q.io/" + this.fileAddress + ":3334/" + fileName;
         } else {
-          this.fileUrl = `${fileName} upload fail!`;
+          if (notEnoughBalance) {
+            this.$notify.error({
+              title: 'Not enough balance!',
+              message: 'File >=24kb requires staking token.'
+            });
+          } else {
+            this.fileUrl = `${fileName} upload fail!`;
+          }
         }
         this.isLoading = false;
       } else {
