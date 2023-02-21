@@ -515,6 +515,15 @@ export default {
         if (fileSize > 24 * 1024 - 326) {
           cost = Math.floor((fileSize + 326) / 1024 / 24);
         }
+        const balance = await contract.provider.getBalance(this.currentAccount);
+        if(balance.lte(ethers.utils.parseEther(cost.toString()))){
+          // not enough balance
+          this.$notify.error({
+            title: 'Not enough balance!',
+            message: 'File >=24kb requires staking token.'
+          });
+          return;
+        }
 
         action = () => contract.writeBlog(
             stringToHex(this.editingTitle),
