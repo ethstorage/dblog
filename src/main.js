@@ -3,25 +3,24 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import {
   faGithub, faTwitter, faTelegram, faMedium, faDiscord
 } from '@fortawesome/free-brands-svg-icons';
-import {
-  faEnvelope, faBook, faCircleInfo, faSortDown
-} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-
 
 import App from './App.vue';
 import router from './router';
 import Buefy from 'buefy';
+import Element from 'element-ui';
 import AsyncComputed from 'vue-async-computed'
 
 import 'buefy/dist/buefy.css';
 import './assets/font/font.css';
+import 'element-ui/lib/theme-chalk/index.css';
 
 Vue.use(Buefy);
+Vue.use(Element)
 Vue.use(AsyncComputed)
 // use plugin,it will mount Banner and slide components globally
 
-library.add(faGithub, faTwitter, faTelegram, faMedium, faDiscord, faEnvelope, faBook, faCircleInfo, faSortDown);
+library.add(faGithub, faTwitter, faTelegram, faMedium, faDiscord);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
 Vue.config.productionTip = false;

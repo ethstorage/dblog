@@ -86,7 +86,7 @@
         <div class="hero-body">
           <p class="title">Web3Q Blog Example</p>
           <p class="subtitle">
-            <router-link to="/blog">back to the portal</router-link>
+            <router-link to="/">back to the portal</router-link>
           </p>
         </div>
       </section>
@@ -664,104 +664,78 @@ export default {
       const fileName = "image/" + this.file.name;
       const hexName = stringToHex(fileName);
       const content = await readFile(this.file);
+
       // Data need to be sliced if file > 475K
       let fileSize = this.file.size;
-      const fileContract = FileContract(this.fileAddress);
+      let chunks = [];
       if (fileSize > 475 * 1024) {
         const chunkSize = Math.ceil(fileSize / (475 * 1024));
-        const chunks = bufferChunk(content, chunkSize);
+        chunks = bufferChunk(content, chunkSize);
         fileSize = fileSize / chunkSize;
-        let uploadState = true;
-        let notEnoughBalance = false;
         this.fileUrl = "The file is too big and exceeds the 475kb limit, so it needs to be uploaded in " + chunks.length + " steps."
-        for (const index in chunks) {
-          const chunk = chunks[index];
-
-          let cost = 0;
-          if (fileSize > 24 * 1024 - 326) {
-            cost = Math.floor((fileSize + 326) / 1024 / 24);
-          }
-
-          const hexData = '0x' + chunk.toString('hex');
-          const localHash = '0x' + sha3(chunk);
-          const hash = await fileContract.getChunkHash(hexName, index);
-          if (localHash === hash) {
-            console.log(`File ${fileName} chunkId: ${index}: The data is not changed.`);
-            continue;
-          }
-
-          try {
-            const balance = await fileContract.provider.getBalance(account[0]);
-            if(balance.lte(ethers.utils.parseEther(cost.toString()))){
-              // not enough balance
-              uploadState = false;
-              notEnoughBalance = true;
-              break;
-            }
-
-            // file is remove or change
-            const tx = await fileContract.writeChunk(hexName, index, hexData, {
-              value: ethers.utils.parseEther(cost.toString())
-            });
-            console.log(`Transaction Id: ${tx.hash}`);
-            this.fileUrl = "Uploaded steps:" + index + "/" + chunks.length;
-            const receipt = await tx.wait();
-            if (!receipt.status) {
-              uploadState = false;
-              break;
-            }
-            const temp = Number(index) + 1;
-            this.fileUrl = "Uploaded steps:" + temp + "/" + chunks.length;
-          } catch (e) {
-            uploadState = false;
-            break;
-          }
-        }
-        if (uploadState) {
-          this.fileUrl = "https://galileo.web3q.io/" + this.fileAddress + ":3334/" + fileName;
-        } else {
-          if (notEnoughBalance) {
-            this.$notify.error({
-              title: 'Not enough balance!',
-              message: 'File >=24kb requires staking token.'
-            });
-          } else {
-            this.fileUrl = `${fileName} upload fail!`;
-          }
-        }
-        this.isLoading = false;
       } else {
+        chunks.push(content);
+      }
+
+      const fileContract = FileContract(this.fileAddress);
+      let uploadState = true;
+      let notEnoughBalance = false;
+      for (const index in chunks) {
+        const chunk = chunks[index];
+
         let cost = 0;
         if (fileSize > 24 * 1024 - 326) {
           cost = Math.floor((fileSize + 326) / 1024 / 24);
         }
 
-        const hexData = '0x' + content.toString('hex');
-        const localHash = '0x' + sha3(content);
-        const hash = await fileContract.getChunkHash(hexName, 0);
+        const hexData = '0x' + chunk.toString('hex');
+        const localHash = '0x' + sha3(chunk);
+        const hash = await fileContract.getChunkHash(hexName, index);
         if (localHash === hash) {
-          this.fileUrl = "https://galileo.web3q.io/" + this.fileAddress + ":3334/" + fileName;
-          this.isLoading = false;
-          return;
+          console.log(`File ${fileName} chunkId: ${index}: The data is not changed.`);
+          continue;
         }
 
         try {
-          const tx = await fileContract.write(hexName, hexData, {
+          const balance = await fileContract.provider.getBalance(this.currentAccount);
+          if(balance.lte(ethers.utils.parseEther(cost.toString()))){
+            // not enough balance
+            uploadState = false;
+            notEnoughBalance = true;
+            break;
+          }
+
+          // file is remove or change
+          const tx = await fileContract.writeChunk(hexName, index, hexData, {
             value: ethers.utils.parseEther(cost.toString())
           });
           console.log(`Transaction Id: ${tx.hash}`);
+          this.fileUrl = "Uploaded steps:" + index + "/" + chunks.length;
           const receipt = await tx.wait();
-          if (receipt.status) {
-            this.fileUrl = "https://galileo.web3q.io/" + this.fileAddress + ":3334/" + fileName;
-            this.isLoading = false;
-            return;
+          if (!receipt.status) {
+            uploadState = false;
+            break;
           }
+          const temp = Number(index) + 1;
+          this.fileUrl = "Uploaded steps:" + temp + "/" + chunks.length;
         } catch (e) {
-          console.log(`File ${fileName} fail!`);
+          uploadState = false;
+          break;
+        }
+      }
+
+      if (uploadState) {
+        this.fileUrl = "https://galileo.web3q.io/" + this.fileAddress + ":3334/" + fileName;
+      } else {
+        if (notEnoughBalance) {
+          this.$notify.error({
+            title: 'Not enough balance!',
+            message: 'File >=24kb requires staking token.'
+          });
         }
         this.fileUrl = `${fileName} upload fail!`;
-        this.isLoading = false;
       }
+      this.isLoading = false;
     },
   },
   computed: {
