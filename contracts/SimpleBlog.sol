@@ -57,6 +57,7 @@ contract SimpleBlog is SimpleFlatDirectory {
     }
 
     function deleteBlog(uint256 idx) public {
+        require(blogs[idx].timestamp != 0, "blog is deleted");
         blogs[idx].timestamp = 0;
         blogLength--;
         remove(abi.encodePacked(idx));
