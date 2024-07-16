@@ -27,5 +27,5 @@ module.exports = {
       });
   },
   productionSourceMap: false,
-  publicPath: '/dblog.w3q/'
+  publicPath: '/'
 };
