@@ -20,7 +20,7 @@
       <section class="hero is-medium">
         <div class="hero-body">
           <div class="">
-            <p class="title">Web3Q Blog Platform</p>
+            <p class="title">EthStorage Blog Platform</p>
             <p class="subtitle">Experience decentralized blogging</p>
           </div>
         </div>
@@ -28,7 +28,7 @@
       <b-field label="Input your blog contract address">
         <b-input
             v-model="inputBlogAddress"
-            placeholder="0x1234.... or myname.w3q"
+            placeholder="0x1234...."
             class="code"
             expanded
         ></b-input>
@@ -49,34 +49,6 @@
           >
             Deploy
           </button>
-        </p>
-      </b-field>
-
-      <b-field
-          label="... and then link your blog to your W3NS domain"
-          type="is-success"
-      >
-        <b-input
-            v-model="domain"
-            placeholder="Domain"
-            style="max-width: 125px"
-        ></b-input>
-        <p class="control">
-          <span class="button is-static">.w3q</span>
-        </p>
-        <b-input
-            v-model="inputBlogAddressToLink"
-            placeholder="Blog contract address: 0x1234..."
-            class="code"
-            expanded
-        ></b-input>
-        <p class="control">
-          <b-button
-              type="is-primary"
-              label="Link"
-              :disabled="!isChainSupported"
-              @click="onLink"
-          />
         </p>
       </b-field>
     </div>
@@ -253,7 +225,7 @@
 
 import {ethers} from "ethers";
 import Footer from "@/views/Footer";
-import namehash from "eth-ens-namehash";
+// import namehash from "eth-ens-namehash";
 
 const sha3 = require('js-sha3').keccak_256;
 
@@ -326,28 +298,26 @@ const FileContractInfo = {
   ],
 };
 
-const nameServiceContractInfo = {
-  address: "0x076B3e04dd300De7db95Ba3F5db1eD31f3139aE0",
-  abi: [
-    "function setText(bytes32 node, string calldata key, string calldata value) external",
-  ],
-};
+// const nameServiceContractInfo = {
+//   address: "0x076B3e04dd300De7db95Ba3F5db1eD31f3139aE0",
+//   abi: [
+//     "function setText(bytes32 node, string calldata key, string calldata value) external",
+//   ],
+// };
 
 // blog
 const blogContract = (address) => {
   return getContract(address, blogContractInfo.abi);
 };
-const blogAPI = (subURL) => generateAPI(`https://galileo.web3q.io/${subURL}`);
 
-
-const nameServiceContract = () => {
-  const {address, abi} = nameServiceContractInfo;
-  return getContract(address, abi);
-};
-
-const nameServiceAPI = (subURL) => generateAPI(
-    `https://galileo.web3q.io/${nameServiceContractInfo.address}:3334${subURL}`
-);
+// const nameServiceContract = () => {
+//   const {address, abi} = nameServiceContractInfo;
+//   return getContract(address, abi);
+// };
+//
+// const nameServiceAPI = (subURL) => generateAPI(
+//     `https://${nameServiceContractInfo.address}:3334.w3link.io/${subURL}`
+// );
 
 const FileContract = (address) => {
   return getContract(address, FileContractInfo.abi);
@@ -359,10 +329,10 @@ export class UnsupportedChainIdError extends Error {
   }
 }
 
-const chain = 3334;
+const chain = 43069;
 const chainID = `0x${chain.toString(16)}`;
-const nodes = ['https://galileo.web3q.io:8545']
-const explorers = [`https://explorer.galileo.web3q.io/`];
+const nodes = ['http://65.109.20.29:8545']
+const explorers = [`http://65.109.20.29/`];
 
 export default {
   name: "Blog",
@@ -429,10 +399,10 @@ export default {
             params: [
               {
                 chainId: chainID,
-                chainName: 'Web3Q Galileo',
+                chainName: 'QuarkChain L2 Testnet',
                 nativeCurrency: {
-                  name: 'W3Q',
-                  symbol: 'W3Q',
+                  name: 'QKC',
+                  symbol: 'QKC',
                   decimals: 18,
                 },
                 rpcUrls: nodes,
@@ -487,17 +457,18 @@ export default {
         this.inputBlogAddressToLink = this.deployedBlog;
       }
     },
-    async onLink() {
-      if (!this.domain || !this.inputBlogAddressToLink) {
-        return;
-      }
-      const domainNode = namehash.hash(`${this.domain}.w3q`);
-      const contract = nameServiceContract();
-      await this._doTx(() =>
-          contract.setText(domainNode, "blog", this.inputBlogAddressToLink)
-      );
-      this.$router.push(`/blog/${this.domain}.w3q`);
-    },
+    // async onLink() {
+    //   if (!this.domain || !this.inputBlogAddressToLink) {
+    //     return;
+    //   }
+    //   const domainNode = namehash.hash(`${this.domain}.w3q`);
+    //   const contract = nameServiceContract();
+    //   await this._doTx(() =>
+    //       contract.setText(domainNode, "blog", this.inputBlogAddressToLink)
+    //   );
+    //   this.$router.push(`/blog/${this.domain}.w3q`);
+    // },
+
     async write() {
       if (!this.markdownEditor) {
         console.warn("editor not ready");
@@ -505,30 +476,13 @@ export default {
       }
 
       const content = this.markdownEditor.value();
-      const fileSize = Buffer.byteLength(content, "utf-8");
-
       const contract = blogContract(this.blogAddress);
       let action,
           reloadCurrentBlog = false;
       if (!this.$route.params.id) {
-        let cost = 0;
-        if (fileSize > 24 * 1024 - 326) {
-          cost = Math.floor((fileSize + 326) / 1024 / 24);
-        }
-        const balance = await contract.provider.getBalance(this.currentAccount);
-        if(balance.lte(ethers.utils.parseEther(cost.toString()))){
-          // not enough balance
-          this.$notify.error({
-            title: 'Not enough balance!',
-            message: 'File >=24kb requires staking token.'
-          });
-          return;
-        }
-
         action = () => contract.writeBlog(
             stringToHex(this.editingTitle),
             stringToHex(content),
-            {value: ethers.utils.parseEther(cost.toString())}
         );
       } else {
         const idx = parseInt(this.$route.params.id, 10);
@@ -598,20 +552,20 @@ export default {
         this.$router.push(`/blog/${address}`);
         return;
       }
-      if (input.endsWith(".w3q")) {
-        const domainNode = namehash.hash(input);
-        const response = await nameServiceAPI("->(string)")
-            .text(`bytes32!${domainNode}`)("string!blog")
-            .get();
-        let [address] = await response.json();
-        if (!address) {
-          alert("invalid domain name");
-          return;
-        }
-        address = ethers.utils.getAddress(address.toLowerCase());
-        this.$router.push(`/blog/${input}`);
-        return;
-      }
+      // if (input.endsWith(".w3q")) {
+      //   const domainNode = namehash.hash(input);
+      //   const response = await nameServiceAPI("->(string)")
+      //       .text(`bytes32!${domainNode}`)("string!blog")
+      //       .get();
+      //   let [address] = await response.json();
+      //   if (!address) {
+      //     alert("invalid domain name");
+      //     return;
+      //   }
+      //   address = ethers.utils.getAddress(address.toLowerCase());
+      //   this.$router.push(`/blog/${input}`);
+      //   return;
+      // }
       alert("invalid address");
     },
     async _doTx(txFunc) {
@@ -677,26 +631,19 @@ export default {
       // Data need to be sliced if file > 475K
       let fileSize = this.file.size;
       let chunks = [];
-      if (fileSize > 475 * 1024) {
-        const chunkSize = Math.ceil(fileSize / (475 * 1024));
+      if (fileSize > 24 * 1024 - 326) {
+        const chunkSize = Math.ceil(fileSize / (24 * 1024 - 326));
         chunks = bufferChunk(content, chunkSize);
         fileSize = fileSize / chunkSize;
-        this.fileUrl = "The file is too big and exceeds the 475kb limit, so it needs to be uploaded in " + chunks.length + " steps."
+        this.fileUrl = "The file is too big and exceeds the 24kb limit, so it needs to be uploaded in " + chunks.length + " steps."
       } else {
         chunks.push(content);
       }
 
       const fileContract = FileContract(this.fileAddress);
       let uploadState = true;
-      let notEnoughBalance = false;
       for (const index in chunks) {
         const chunk = chunks[index];
-
-        let cost = 0;
-        if (fileSize > 24 * 1024 - 326) {
-          cost = Math.floor((fileSize + 326) / 1024 / 24);
-        }
-
         const hexData = '0x' + chunk.toString('hex');
         const localHash = '0x' + sha3(chunk);
         const hash = await fileContract.getChunkHash(hexName, index);
@@ -706,18 +653,8 @@ export default {
         }
 
         try {
-          const balance = await fileContract.provider.getBalance(this.currentAccount);
-          if(balance.lte(ethers.utils.parseEther(cost.toString()))){
-            // not enough balance
-            uploadState = false;
-            notEnoughBalance = true;
-            break;
-          }
-
           // file is remove or change
-          const tx = await fileContract.writeChunk(hexName, index, hexData, {
-            value: ethers.utils.parseEther(cost.toString())
-          });
+          const tx = await fileContract.writeChunk(hexName, index, hexData);
           console.log(`Transaction Id: ${tx.hash}`);
           this.fileUrl = "Uploaded steps:" + index + "/" + chunks.length;
           const receipt = await tx.wait();
@@ -734,14 +671,8 @@ export default {
       }
 
       if (uploadState) {
-        this.fileUrl = "https://galileo.web3q.io/" + this.fileAddress + ":3334/" + fileName;
+        this.fileUrl = "https://" + this.fileAddress + ".3336.w3link.io/" + fileName;
       } else {
-        if (notEnoughBalance) {
-          this.$notify.error({
-            title: 'Not enough balance!',
-            message: 'File >=24kb requires staking token.'
-          });
-        }
         this.fileUrl = `${fileName} upload fail!`;
       }
       this.isLoading = false;
@@ -795,18 +726,18 @@ export default {
         if (address.startsWith("0x") && address.length === 42) {
           return ethers.utils.getAddress(address.toLowerCase());
         }
-        if (address.endsWith(".w3q")) {
-          const domainNode = namehash.hash(address);
-          const response = await nameServiceAPI("->(string)")
-              .text(`bytes32!${domainNode}`)("string!blog")
-              .get();
-          const [realAddress] = await response.json();
-          if (!realAddress) {
-            alert("invalid domain name");
-            return "";
-          }
-          return ethers.utils.getAddress(realAddress.toLowerCase());
-        }
+        // if (address.endsWith(".w3q")) {
+        //   const domainNode = namehash.hash(address);
+        //   const response = await nameServiceAPI("->(string)")
+        //       .text(`bytes32!${domainNode}`)("string!blog")
+        //       .get();
+        //   const [realAddress] = await response.json();
+        //   if (!realAddress) {
+        //     alert("invalid domain name");
+        //     return "";
+        //   }
+        //   return ethers.utils.getAddress(realAddress.toLowerCase());
+        // }
         alert("invalid blog address");
         return "";
       },
@@ -819,14 +750,15 @@ export default {
         const addr = this.blogAddress;
         const blogs = [];
         try {
-          const response = await blogAPI(
-              `${addr}:3334->(bytes[],uint256[],uint256[])`
-          ).listBlogs.get();
-          if (response.status == 400) {
+          const response = await generateAPI(
+              `https://${addr}.3336.w3link.io/listBlogs?returns=(bytes[],uint256[],uint256[])`
+          ).get();
+          if (response.status === 400) {
             throw new Error("invalid blog contract address");
           } else if (response.status > 400 && response.status < 600) {
             throw new Error("gateway error");
           }
+
           const [titles, timestamps, idxList] = await response.json();
           for (let i = 0; i < titles.length; i++) {
             blogs.push({
@@ -854,16 +786,16 @@ export default {
           return {};
         }
 
-        const addr = this.blogAddress;
         try {
-          const response = await blogAPI(`${addr}:3334->(bytes,uint256,bytes)`)
-              .getBlog(this.$route.params.id)
-              .get();
+          const response = await generateAPI(
+              `https://${this.blogAddress}.3336.w3link.io/getBlog/uint256!${this.$route.params.id}?returns=(bytes,uint256,bytes)`
+          ).get();
           if (response.status >= 400 && response.status < 600) {
             throw new Error("gateway error");
           }
+
           const [title, timestampStr, content] = await response.json();
-          const timestamp = parseInt(timestampStr, 10);
+          const timestamp = parseInt(timestampStr, 16);
           if (timestamp === 0) {
             return {
               title: "<post deleted>",
@@ -890,9 +822,9 @@ export default {
       if (this.mode !== "content" || !this.blogAddress) {
         return null;
       }
-      const response = await blogAPI(`${this.blogAddress}:3334->(uint256,bool)`)
-          .prevPost(this.$route.params.id)
-          .get();
+      const response = await generateAPI(
+          `https://${this.blogAddress}.3336.w3link.io/prevPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
+      ).get();
       const [prevIdx, exists] = await response.json();
       if (!exists) {
         return null;
@@ -903,9 +835,9 @@ export default {
       if (this.mode !== "content" || !this.blogAddress) {
         return null;
       }
-      const response = await blogAPI(`${this.blogAddress}:3334->(uint256,bool)`)
-          .nextPost(this.$route.params.id)
-          .get();
+      const response = await generateAPI(
+          `https://${this.blogAddress}.3336.w3link.io/nextPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
+      ).get();
       const [nextIdx, exists] = await response.json();
       if (!exists) {
         return null;
@@ -916,9 +848,9 @@ export default {
       if (!this.blogAddress) {
         return "";
       }
-      const response = await blogAPI(
-          `${this.blogAddress}:3334->(address)`
-      ).owner.get();
+      const response = await generateAPI(
+          `https://${this.blogAddress}.3336.w3link.io/owner?returns=(address)`
+      ).get();
       const [owner] = await response.json();
       return owner;
     },
@@ -928,12 +860,11 @@ export default {
           return [];
         }
 
-        const addr = this.blogAddress;
         const comments = [];
         try {
-          const response = await blogAPI(
-              `${addr}:3334->(address[],bytes[],bytes[])`
-          ).getComments(this.$route.params.id).get();
+          const response = await generateAPI(
+              `https://${this.blogAddress}.3336.w3link.io/getComments/uint256!${this.$route.params.id}?returns=(address[],bytes[],bytes[])`
+          ).get();
           if (response.status === 400) {
             throw new Error("invalid comment contract address");
           } else if (response.status > 400 && response.status < 600) {
@@ -968,9 +899,9 @@ export default {
         if (!address) {
           return "";
         }
-        const response = await blogAPI(`${address}:3334->(address)`)
-            .assets()
-            .get();
+        const response = await generateAPI(
+            `https://${address}.3336.w3link.io/assets?returns=(address)`
+        ).get();
         const [realAddress] = await response.json();
         console.log(realAddress);
         if (!realAddress) {
