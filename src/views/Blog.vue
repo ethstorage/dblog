@@ -329,10 +329,10 @@ export class UnsupportedChainIdError extends Error {
   }
 }
 
-const chain = 43069;
+const chain = 3335;
 const chainID = `0x${chain.toString(16)}`;
-const nodes = ['https://rpc.testnet.l2.quarkchain.io:8545']
-const explorers = [`https://explorer.testnet.l2.quarkchain.io/`];
+const nodes = ['https://rpc.beta.testnet.l2.quarkchain.io:8545']
+const explorers = [`https://explorer.beta.testnet.l2.quarkchain.io/`];
 
 export default {
   name: "Blog",
@@ -671,7 +671,7 @@ export default {
       }
 
       if (uploadState) {
-        this.fileUrl = "https://" + this.fileAddress + ".3336.w3link.io/" + fileName;
+        this.fileUrl = "https://" + this.fileAddress + ".3337.w3link.io/" + fileName;
       } else {
         this.fileUrl = `${fileName} upload fail!`;
       }
@@ -751,7 +751,7 @@ export default {
         const blogs = [];
         try {
           const response = await generateAPI(
-              `https://${addr}.3336.w3link.io/listBlogs?returns=(bytes[],uint256[],uint256[])`
+              `https://${addr}.3337.w3link.io/listBlogs?returns=(bytes[],uint256[],uint256[])`
           ).get();
           if (response.status === 400) {
             throw new Error("invalid blog contract address");
@@ -763,8 +763,8 @@ export default {
           for (let i = 0; i < titles.length; i++) {
             blogs.push({
               title: hexToString(titles[i]) || "<empty>",
-              timestamp: new Date(parseInt(timestamps[i], 10) * 1000),
-              idx: parseInt(idxList[i], 10),
+              timestamp: new Date(parseInt(timestamps[i], 16) * 1000),
+              idx: parseInt(idxList[i], 16),
             });
           }
         } catch (err) {
@@ -788,7 +788,7 @@ export default {
 
         try {
           const response = await generateAPI(
-              `https://${this.blogAddress}.3336.w3link.io/getBlog/uint256!${this.$route.params.id}?returns=(bytes,uint256,bytes)`
+              `https://${this.blogAddress}.3337.w3link.io/getBlog/uint256!${this.$route.params.id}?returns=(bytes,uint256,bytes)`
           ).get();
           if (response.status >= 400 && response.status < 600) {
             throw new Error("gateway error");
@@ -823,7 +823,7 @@ export default {
         return null;
       }
       const response = await generateAPI(
-          `https://${this.blogAddress}.3336.w3link.io/prevPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
+          `https://${this.blogAddress}.3337.w3link.io/prevPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
       ).get();
       const [prevIdx, exists] = await response.json();
       if (!exists) {
@@ -836,7 +836,7 @@ export default {
         return null;
       }
       const response = await generateAPI(
-          `https://${this.blogAddress}.3336.w3link.io/nextPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
+          `https://${this.blogAddress}.3337.w3link.io/nextPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
       ).get();
       const [nextIdx, exists] = await response.json();
       if (!exists) {
@@ -849,7 +849,7 @@ export default {
         return "";
       }
       const response = await generateAPI(
-          `https://${this.blogAddress}.3336.w3link.io/owner?returns=(address)`
+          `https://${this.blogAddress}.3337.w3link.io/owner?returns=(address)`
       ).get();
       const [owner] = await response.json();
       return owner;
@@ -863,7 +863,7 @@ export default {
         const comments = [];
         try {
           const response = await generateAPI(
-              `https://${this.blogAddress}.3336.w3link.io/getComments/uint256!${this.$route.params.id}?returns=(address[],bytes[],bytes[])`
+              `https://${this.blogAddress}.3337.w3link.io/getComments/uint256!${this.$route.params.id}?returns=(address[],bytes[],bytes[])`
           ).get();
           if (response.status === 400) {
             throw new Error("invalid comment contract address");
@@ -900,7 +900,7 @@ export default {
           return "";
         }
         const response = await generateAPI(
-            `https://${address}.3336.w3link.io/assets?returns=(address)`
+            `https://${address}.3337.w3link.io/assets?returns=(address)`
         ).get();
         const [realAddress] = await response.json();
         console.log(realAddress);
