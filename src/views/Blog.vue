@@ -329,10 +329,8 @@ export class UnsupportedChainIdError extends Error {
   }
 }
 
-const chain = 3335;
-const chainID = `0x${chain.toString(16)}`;
-const nodes = ['https://rpc.beta.testnet.l2.quarkchain.io:8545']
-const explorers = [`https://explorer.beta.testnet.l2.quarkchain.io/`];
+const chain = 11155111;
+const CHAIN_ID = `0x${chain.toString(16)}`;
 
 export default {
   name: "Blog",
@@ -373,58 +371,59 @@ export default {
       }
       this.login();
     },
-    async login() {
-      window.ethereum
-          .request({method: "eth_requestAccounts"})
-          .then(this.handleAccountsChanged)
-          .catch(async (error) => {
-            if (error.code === 4001) {
-              this.$message.error('User rejected');
-            } else if (error instanceof UnsupportedChainIdError) {
-              const hasSetup = await this.setupNetwork();
-              if (hasSetup) {
-                await this.login();
-              }
-            } else {
-              this.$message.error('Connect Error');
-            }
-          });
-    },
-    async setupNetwork() {
-      const provider = window.ethereum;
-      if (provider) {
-        try {
-          await provider.request({
-            method: 'wallet_addEthereumChain',
-            params: [
-              {
-                chainId: chainID,
-                chainName: 'QuarkChain L2 Testnet',
-                nativeCurrency: {
-                  name: 'QKC',
-                  symbol: 'QKC',
-                  decimals: 18,
-                },
-                rpcUrls: nodes,
-                blockExplorerUrls: explorers,
-              },
-            ],
-          })
-          const newChainId = await window.ethereum.request({method: "eth_chainId"});
-          if (chainID !== newChainId) {
-            this.$message.error('User rejected');
-            return false;
-          }
-          return true;
-        } catch (error) {
-          this.$message.error('Failed to setup the network in Metamask');
-          return false
-        }
-      } else {
-        this.$message.error('Can\'t setup the QuarkChain L2 Testnet network on metamask because window.ethereum is undefined');
-        return false
-      }
-    },
+		async login() {
+			try {
+				await window.ethereum.request({
+					method: 'eth_requestAccounts',
+				});
+
+				// check
+				const chainId = await window.ethereum.request({
+					method: 'eth_chainId',
+				});
+				if (chainId !== CHAIN_ID) {
+					const success = await this.switchNetwork();
+					if (!success) return;
+				}
+
+				const accounts = await window.ethereum.request({
+					method: 'eth_accounts',
+				});
+				await this.handleAccount(accounts);
+			} catch (error) {
+				if (error.code === 4001) {
+					this.$message.error('User rejected');
+				} else {
+					this.$message.error('Connect Error');
+					console.error(error);
+				}
+			}
+		},
+		async switchNetwork() {
+			try {
+				await window.ethereum.request({
+					method: 'wallet_switchEthereumChain',
+					params: [{ chainId: CHAIN_ID }],
+				});
+				return true;
+			} catch (error) {
+				if (error.code === 4001) {
+					this.$message.error(`Please switch to Sepolia network`);
+				} else {
+					this.$message.error('Failed to switch network');
+					console.error(error);
+				}
+				return false;
+			}
+		},
+		async handleAccount(accounts) {
+			// account
+			if (accounts.length === 0) {
+				console.warn( "MetaMask is locked or the user has not connected any accounts");
+				return;
+			}
+			this.currentAccount = accounts[0];
+		},
     async handleAccountsChanged(accounts) {
       // account
       if (accounts.length === 0) {
@@ -434,12 +433,6 @@ export default {
         );
         return;
       }
-      const newChainId = await window.ethereum.request({method: "eth_chainId"});
-      if (chainID !== newChainId) {
-        this.currentAccount = null;
-        throw new UnsupportedChainIdError();
-      }
-
       if (accounts[0] !== this.currentAccount) {
         this.currentAccount = accounts[0];
       }
@@ -671,7 +664,7 @@ export default {
       }
 
       if (uploadState) {
-        this.fileUrl = "https://" + this.fileAddress + ".3337.w3link.io/" + fileName;
+        this.fileUrl = "https://" + this.fileAddress + ".3333.w3link.io/" + fileName;
       } else {
         this.fileUrl = `${fileName} upload fail!`;
       }
@@ -751,7 +744,7 @@ export default {
         const blogs = [];
         try {
           const response = await generateAPI(
-              `https://${addr}.3337.w3link.io/listBlogs?returns=(bytes[],uint256[],uint256[])`
+              `https://${addr}.3333.w3link.io/listBlogs?returns=(bytes[],uint256[],uint256[])`
           ).get();
           if (response.status === 400) {
             throw new Error("invalid blog contract address");
@@ -788,7 +781,7 @@ export default {
 
         try {
           const response = await generateAPI(
-              `https://${this.blogAddress}.3337.w3link.io/getBlog/uint256!${this.$route.params.id}?returns=(bytes,uint256,bytes)`
+              `https://${this.blogAddress}.3333.w3link.io/getBlog/uint256!${this.$route.params.id}?returns=(bytes,uint256,bytes)`
           ).get();
           if (response.status >= 400 && response.status < 600) {
             throw new Error("gateway error");
@@ -823,7 +816,7 @@ export default {
         return null;
       }
       const response = await generateAPI(
-          `https://${this.blogAddress}.3337.w3link.io/prevPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
+          `https://${this.blogAddress}.3333.w3link.io/prevPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
       ).get();
       const [prevIdx, exists] = await response.json();
       if (!exists) {
@@ -836,7 +829,7 @@ export default {
         return null;
       }
       const response = await generateAPI(
-          `https://${this.blogAddress}.3337.w3link.io/nextPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
+          `https://${this.blogAddress}.3333.w3link.io/nextPost/uint256!${this.$route.params.id}?returns=(uint256,bool)`
       ).get();
       const [nextIdx, exists] = await response.json();
       if (!exists) {
@@ -849,7 +842,7 @@ export default {
         return "";
       }
       const response = await generateAPI(
-          `https://${this.blogAddress}.3337.w3link.io/owner?returns=(address)`
+          `https://${this.blogAddress}.3333.w3link.io/owner?returns=(address)`
       ).get();
       const [owner] = await response.json();
       return owner;
@@ -863,7 +856,7 @@ export default {
         const comments = [];
         try {
           const response = await generateAPI(
-              `https://${this.blogAddress}.3337.w3link.io/getComments/uint256!${this.$route.params.id}?returns=(address[],bytes[],bytes[])`
+              `https://${this.blogAddress}.3333.w3link.io/getComments/uint256!${this.$route.params.id}?returns=(address[],bytes[],bytes[])`
           ).get();
           if (response.status === 400) {
             throw new Error("invalid comment contract address");
@@ -900,7 +893,7 @@ export default {
           return "";
         }
         const response = await generateAPI(
-            `https://${address}.3337.w3link.io/assets?returns=(address)`
+            `https://${address}.3333.w3link.io/assets?returns=(address)`
         ).get();
         const [realAddress] = await response.json();
         console.log(realAddress);
