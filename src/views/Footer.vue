@@ -21,7 +21,7 @@
 </template>
 <script>
 export default {
-  name: "Footer",
+  name: "FooterView",
   props: {
     color: {
       type: String,

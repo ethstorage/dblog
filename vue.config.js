@@ -13,18 +13,15 @@ module.exports = {
   },
   chainWebpack: config => {
     config.module
-      .rule("images")
-      .use("url-loader")
-      .tap(options => {
-        options.name = `[name].[ext]`;
-        options.fallback = {
-          loader: "file-loader",
-          options: {
-            name: `[name].[ext]`
-          }
-        };
-        return options;
-      });
+        .rule("images")
+        .set('generator', {
+          filename: '[name][ext]'
+        });
+    config.module
+        .rule("svg")
+        .set('generator', {
+          filename: '[name][ext]'
+        });
   },
   productionSourceMap: false,
   publicPath: '/'
